@@ -5,19 +5,25 @@ const notion = new Client({
 });
 
 export default async function handler(req, res) {
-  const response = await notion.databases.query({
-    database_id: process.env.NOTION_DB_ID,
-  });
+  try {
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_DB_ID,
+    });
 
-  const posts = response.results.map((page) => {
-    const image =
-      page.properties.Image.files[0]?.file?.url ||
-      page.properties.Image.files[0]?.external?.url;
+    const posts = response.results.map((page) => {
+      const files = page.properties.visuel?.files || [];
 
-    return {
-      image,
-    };
-  });
+      const image =
+        files[0]?.file?.url ||
+        files[0]?.external?.url ||
+        null;
 
-  res.status(200).json(posts);
+      return { image };
+    });
+
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
 }
